@@ -5,45 +5,106 @@ from random import randint, choice as rc
 from faker import Faker
 
 from app import app
-from models import db, Bakery, BakedGood
+from models import db, Game, Review, User
+
+genres = [
+    "Platformer",
+    "Shooter",
+    "Fighting",
+    "Stealth",
+    "Survival",
+    "Rhythm",
+    "Survival Horror",
+    "Metroidvania",
+    "Text-Based",
+    "Visual Novel",
+    "Tile-Matching",
+    "Puzzle",
+    "Action RPG",
+    "MMORPG",
+    "Tactical RPG",
+    "JRPG",
+    "Life Simulator",
+    "Vehicle Simulator",
+    "Tower Defense",
+    "Turn-Based Strategy",
+    "Racing",
+    "Sports",
+    "Party",
+    "Trivia",
+    "Sandbox"
+]
+
+platforms = [
+    "NES",
+    "SNES",
+    "Nintendo 64",
+    "GameCube",
+    "Wii",
+    "Wii U",
+    "Nintendo Switch",
+    "GameBoy",
+    "GameBoy Advance",
+    "Nintendo DS",
+    "Nintendo 3DS",
+    "XBox",
+    "XBox 360",
+    "XBox One",
+    "XBox Series X/S",
+    "PlayStation",
+    "PlayStation 2",
+    "PlayStation 3",
+    "PlayStation 4",
+    "PlayStation 5",
+    "PSP",
+    "PS Vita",
+    "Genesis",
+    "DreamCast",
+    "PC",
+]
 
 fake = Faker()
 
 with app.app_context():
 
-    BakedGood.query.delete()
-    Bakery.query.delete()
-    
-    bakeries = []
-    for i in range(20):
-        b = Bakery(
-            name=fake.company()
+    Review.query.delete()
+    User.query.delete()
+    Game.query.delete()
+
+    users = []
+    for i in range(100):
+        u = User(name=fake.name(),)
+        users.append(u)
+
+    db.session.add_all(users)
+
+    games = []
+    for i in range(100):
+        g = Game(
+            title=fake.sentence(),
+            genre=rc(genres),
+            platform=rc(platforms),
+            price=randint(5, 60),
         )
-        bakeries.append(b)
-    
-    db.session.add_all(bakeries)
+        games.append(g)
 
-    baked_goods = []
-    names = []
-    for i in range(200):
+    db.session.add_all(games)
 
-        name = fake.first_name()
-        while name in names:
-            name = fake.first_name()
-        names.append(name)
+    reviews = []
+    for u in users:
+        for i in range(randint(1, 10)):
+            r = Review(
+                score=randint(0, 10),
+                comment=fake.sentence(),
+                user=u,
+                game=rc(games))
+            reviews.append(r)
 
-        bg = BakedGood(
-            name=name,
-            price=randint(1,10),
-            bakery=rc(bakeries)
-        )
+    db.session.add_all(reviews)
 
-        baked_goods.append(bg)
+    for g in games:
+        r = rc(reviews)
+        g.review = r
+        reviews.remove(r)
 
-    db.session.add_all(baked_goods)
-    db.session.commit()
-    
-    most_expensive_baked_good = rc(baked_goods)
-    most_expensive_baked_good.price = 100
-    db.session.add(most_expensive_baked_good)
     db.session.commit()
